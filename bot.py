@@ -10,22 +10,23 @@ from dateutil import tz
 
 from etc import text
 from variables import *
+from hospital_needs import get_hospital_needs
+
+from dotenv import load_dotenv
+load_dotenv()
+print("Modules import")
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-from dotenv import load_dotenv
-load_dotenv()
-print("Start was succesfull")
-
 ########################################
 # https://api.pandemiia.in.ua/api_docs/
 ########################################
 
 
-REGION_CHOICES = {
+REGIONS = {
     1: "Вінницька область",
     2: "Волинська область",
     3: "Дніпропетровська область",
@@ -33,11 +34,11 @@ REGION_CHOICES = {
     5: "Житомирська область",
     6: "Закарпатська область",
     7: "Запорізька область",
-    8: "Івано-Франківська область",
+    8: "@conext_error",
     9: "Київська область",
     10: "Кіровоградська область",
     11: "Луганська область",
-    12: "Львівська область",
+    12: "@conext_error",
     13: "Миколаївська область",
     14: "Одеська область",
     15: "Полтавська область",
@@ -88,8 +89,37 @@ def start(update, context):
 
 
 def callback_daily(context: telegram.ext.CallbackContext):
-    context.bot.send_message(chat_id="@conext_error", 
-                             text='A single message with 30s delay')
+    hospital_needs = get_hospital_needs()
+    """
+    {
+        region_id: {
+            region_name: text, 
+            hospitals: [
+                {
+                    hospital_name: text,
+                    needs: [
+                        {
+                            need_name: text,
+                            needed: int,
+                            received: int
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    """
+    for region_id, region in hospital_needs.items():
+        if region_id in REGIONS:
+            msg = f"<b>{region['region_name']}</b>\n\n"
+            for hospital in region["hospitals"]:
+                h = f"🏥 {hospital['hospital_name']}\n"
+                for need in hospital["needs"]:
+                    h += f"• <i>{need['need_name']} 🙏{need['needed']}/{need['received']}👍</i>\n"
+                msg += h + "\n"
+            context.bot.send_message(chat_id=REGIONS[region_id], 
+                                     text=msg, 
+                                     parse_mode=telegram.ParseMode.HTML)
 
 
 def done(update, context):
@@ -109,12 +139,11 @@ def main():
 
     j = u.job_queue
     kiev_tz = tz.gettz("Europe/Kiev")
-    time_to_work = datetime.time(hour=16, minute=5, second=0, tzinfo=kiev_tz)
+    time_to_work = datetime.time(hour=23, minute=1, second=59, tzinfo=kiev_tz)
     j.run_daily(callback_daily, time_to_work)
     
     necessary_handlers = [CommandHandler('start', start),
                           CommandHandler('stop', done)]
-                        #   CommandHandler('admin', admin)]
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
