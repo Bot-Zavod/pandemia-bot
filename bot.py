@@ -1,9 +1,11 @@
 from telegram.ext import Updater, Filters, ConversationHandler, MessageHandler, CommandHandler, Handler
 import telegram.ext
 from telegram import ReplyKeyboardMarkup #KeyboardButton,InlineKeyboardMarkup,InlineKeyboardButton
-from os import environ, getcwd # for environmental variables
-import logging  #used for error detection
 import requests
+from dotenv import load_dotenv
+
+from os import environ, getcwd
+import logging
 import datetime
 from dateutil import tz
 
@@ -12,7 +14,7 @@ from etc import text
 from variables import *
 from hospital_needs import get_hospital_needs
 
-from dotenv import load_dotenv
+
 load_dotenv()
 print("Modules import")
 
@@ -139,7 +141,7 @@ def main():
 
     j = u.job_queue
     kiev_tz = tz.gettz("Europe/Kiev")
-    time_to_work = datetime.time(hour=23, minute=1, second=59, tzinfo=kiev_tz)
+    time_to_work = datetime.time(hour=23, minute=11, second=1, tzinfo=kiev_tz)
     j.run_daily(callback_daily, time_to_work)
     
     necessary_handlers = [CommandHandler('start', start),

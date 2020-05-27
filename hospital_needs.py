@@ -35,20 +35,21 @@ def pre_config():
     """
 
     for need in needs["results"]:
-        if need["hospital"] not in hospitals:
-            h = requests.get(f"https://api.pandemiia.in.ua/hospitals/{need['hospital']}/").json()
-            hospital_name = h["name"]
-            region = h['region']
-            hospitals[need["hospital"]] = {
-                                            "hospital_name": hospital_name,
-                                            "region": region,
-                                            "needs": []
-                                        }
-        hospitals[need["hospital"]]["needs"].append({
-            "need_name": need["solution_type"]["name"],
-            "needed": need["quantity"]["needed"],
-            "received": need["quantity"]["received"]
-        })
+        if need["quantity"]["needed"]>0:
+            if need["hospital"] not in hospitals:
+                h = requests.get(f"https://api.pandemiia.in.ua/hospitals/{need['hospital']}/").json()
+                hospital_name = h["name"]
+                region = h['region']
+                hospitals[need["hospital"]] = {
+                                                "hospital_name": hospital_name,
+                                                "region": region,
+                                                "needs": []
+                                            }
+            hospitals[need["hospital"]]["needs"].append({
+                "need_name": need["solution_type"]["name"],
+                "needed": need["quantity"]["needed"],
+                "received": need["quantity"]["received"]
+            })
     # pp.pprint(hospitals)
     
     return hospitals
